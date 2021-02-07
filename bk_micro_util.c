@@ -1,11 +1,11 @@
 #include "bk_micro_util.h"
 
-void p_msg(const char *format, ...){
+void p_msg(MPI_Comm comm, const char *format, ...){
     va_list args;
     va_start(args, format);
 
     int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_rank(comm, &rank);
 
     if(rank == 0)
         vprintf(format, args);

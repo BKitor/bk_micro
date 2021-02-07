@@ -21,28 +21,28 @@ int main(int argc, char *argv[]){
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &w_size);
 
-    p_msg("This should be run with BLOCK-BUNCH mapping (--map-by core on OpenMPI) \n" 
+    W_P_MSG("This should be run with BLOCK-BUNCH mapping (--map-by core on OpenMPI) \n" 
     "This also expects 2 nodes, with the same ammount of cores per node\n");
-    p_msg("\nNET_VAL_LAT with world size %d and %d nodes\n", w_size, opts.n_nodes);
+    W_P_MSG("\nNET_VAL_LAT with world size %d and %d nodes\n", w_size, opts.n_nodes);
 
     if(opts.n_nodes == 0){
-        p_msg("node count is 0, aborting\n");
+        W_P_MSG("node count is 0, aborting\n");
         goto abort;
     }
 
     if(opts.n_nodes > 64){
-        p_msg("you've allocated to many nodes, aborting\n");
+        W_P_MSG("you've allocated to many nodes, aborting\n");
         goto abort;
     }
 
     if(w_size%opts.n_nodes){
-        p_msg("Each node needs the same ammount of procs, aborting\n");
+        W_P_MSG("Each node needs the same ammount of procs, aborting\n");
         goto abort;
     }
 
     if(posix_memalign((void**) &src_buff, align_size, max_mgs_size) ||
        posix_memalign((void**) &dst_buff, align_size, max_mgs_size)){
-        p_msg("memalloc failed, exiting/n");
+        W_P_MSG("memalloc failed, exiting/n");
         goto abort;
     }
 
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]){
     comm_key = rank/cutoff_rank;
 
     for(k = 1; k<opts.n_nodes; k++){
-        p_msg("\nRunning against k:%d\n", k);
+        W_P_MSG("\nRunning against k:%d\n", k);
         if((rank < cutoff_rank) || ((rank/cutoff_rank) == k)){// in this cycle
             comm_pair = (rank<cutoff_rank) ? rank + (k*cutoff_rank) 
                         : rank % cutoff_rank;
