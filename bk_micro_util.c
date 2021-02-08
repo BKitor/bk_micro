@@ -22,3 +22,25 @@ int process_opts(int argc, char** argv, bk_opts *opts){
             break;
         }
 }
+
+// Pointer to an array of ints, and the size to be retured
+// fill arr with random numbers from 0 to n-1
+void rand_arr(int * arr, int n){
+    int inner_size = n, r, swp_tmp;
+    int *inner_arr = malloc(sizeof(int)*n);
+
+    for(int i = 0; i<inner_size; i++)
+        inner_arr[i]=i;
+
+    for(int i = 0; i<n; i++){
+        r = rand() % inner_size;
+        arr[i] = inner_arr[r];
+
+        swp_tmp = inner_arr[inner_size - 1];
+        inner_arr[inner_size - 1] = inner_arr[r];
+        inner_arr[r] = swp_tmp;
+        inner_size--;
+    }
+
+    free(inner_arr);
+}

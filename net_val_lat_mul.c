@@ -5,7 +5,7 @@
 #define START_MSG_SIZE (2<<10)
 
 int main(int argc, char *argv[]){
-    int rank, w_size, cutoff_rank, i, n, comm_key, k;
+    int rank, w_size, cutoff_rank, i, n, k;
     int comm_pair, *src_buff=NULL, *dst_buff=NULL;
     unsigned long align_size = sysconf(_SC_PAGESIZE), msg_size, max_mgs_size=MAX_MSG_SIZE;
     double t_start=0.0, t_end=0.0, lat_tmp;
@@ -47,7 +47,6 @@ int main(int argc, char *argv[]){
     }
 
     cutoff_rank = w_size/opts.n_nodes;
-    comm_key = rank/cutoff_rank;
 
     for(k = 1; k<opts.n_nodes; k++){
         W_P_MSG("\nRunning against k:%d\n", k);

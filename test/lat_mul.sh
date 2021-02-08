@@ -1,13 +1,7 @@
 #!/usr/bin/bash
 
-if ! hash mpirun 2> /dev/null; then
-    echo "mpirun not found"
-    exit
-fi
-
-if ! hash mpicc 2> /dev/null; then
-    echo "mpicc not found"
-    exit
+if ! ./test/validate_mpi_env.sh; then 
+    exit 
 fi
 
 if ! make net_val_lat_mul 2> /dev/null; then
