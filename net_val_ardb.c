@@ -1,7 +1,8 @@
 #include "bk_micro_util.h"
 
+// TODO: START_MSG_SIZE, MAX_MSG_SIZE, and NUM_ITTERS should be command line options
 #define MAX_NODES 64
-#define MAX_MSG_SIZE (1<<20)
+#define MAX_MSG_SIZE (1<<25)
 #define NUM_ITTERS 128
 #define START_MSG_SIZE (1<<10)
 #define NUM_MAPPINGS 10
@@ -17,7 +18,8 @@
 
 int main(int argc, char *argv[]){
     int rank, w_size, ppn, v_rank, com_rounds, i, partner, partner_n, node_r, warm_up;
-    char *src_buff, *dst_buff;
+    int *mapping = NULL, *partners = NULL;
+    char *src_buff = NULL, *dst_buff = NULL;
     unsigned long align_size = sysconf(_SC_PAGESIZE), msg_size, max_mgs_size=MAX_MSG_SIZE;
     double itter_time;
     bk_opts opts;
@@ -67,18 +69,19 @@ int main(int argc, char *argv[]){
     W_P_MSG("ardb called with %d rank and %d nodes and %d ppn\n", w_size, opts.n_nodes, ppn);
     fflush(stdout);
 
-    int *mapping = calloc(opts.n_nodes, sizeof(int));
-    int *partners = malloc(com_rounds*sizeof(int));
-    int *tmp_arr = malloc(com_rounds*sizeof(int));
+    mapping = calloc(opts.n_nodes, sizeof(int));
+    partners = malloc(com_rounds*sizeof(int));
 
-    for(int m = 0; m<NUM_MAPPINGS; m++){
+    warm_up = 1;
+    for(int m = -1; m<NUM_MAPPINGS; m++){
         rand_arr(mapping, opts.n_nodes);
         MPI_Bcast(mapping, opts.n_nodes, MPI_INT, 0, MPI_COMM_WORLD);
-        warm_up = 1;
-        W_P_MSG("\nmappnig %d [ ", m);
-        for(int j = 0; j<opts.n_nodes; j++)
-            W_P_MSG("%d ", mapping[j]);
-        W_P_MSG("]\n");
+        if(!warm_up){
+            W_P_MSG("\nmappnig %d [ ", m);
+            for(int j = 0; j<opts.n_nodes; j++)
+                W_P_MSG("%d ", mapping[j]);
+            W_P_MSG("]\n");
+        }
 
         // for(i = 0; i<com_rounds; i++){
         //     partner_n = node_r ^ (1<<i);
@@ -93,11 +96,13 @@ int main(int argc, char *argv[]){
             partners[i] = ppn*virtual_partner + (rank%ppn);
         }
 
-        W_P_MSG("partenrs %d: [ ", rank);
-        for(int j = 0; j<com_rounds; j++)
-            W_P_MSG("%d ", partners[j]);
-        W_P_MSG("]\n");
-        fflush(stdout);
+        if(!warm_up){
+            W_P_MSG("partenrs %d: [ ", rank);
+            for(int j = 0; j<com_rounds; j++)
+                W_P_MSG("%d ", partners[j]);
+            W_P_MSG("]\n");
+            fflush(stdout);
+        }
 
         for(int msg_size = START_MSG_SIZE>>1; msg_size < MAX_MSG_SIZE; msg_size<<=1){
             MPI_Barrier(MPI_COMM_WORLD);
@@ -117,9 +122,10 @@ int main(int argc, char *argv[]){
             }
             MPI_Barrier(MPI_COMM_WORLD);
             itter_time += MPI_Wtime();
-            if(warm_up)warm_up = 0; 
-            else W_P_MSG("%-20d %.2f\n", msg_size, itter_time*1e6/NUM_ITTERS);
+            if(!warm_up) 
+                W_P_MSG("%-20d %.2f\n", msg_size, itter_time*1e6/NUM_ITTERS);
         }
+        warm_up = 0;
     }
 
     MPI_Finalize();
@@ -132,6 +138,8 @@ int main(int argc, char *argv[]){
     return 0;
 
     abort:
+    free(mapping);
+    free(partners);
     free(dst_buff);
     free(src_buff);
     MPI_Finalize();
